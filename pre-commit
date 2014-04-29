@@ -1,0 +1,96 @@
+#!/bin/bash
+
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[0;33m'
+nocolor='\033[0m'
+
+echo -e "${nocolor}[*] Checking puppet lint "
+echo -e $yellow
+for file in `git diff --name-only --cached | grep -E '\.(pp)'`
+do
+    if [[ -f $file ]]
+    then
+        puppet-lint \
+            --no-80chars-check \
+            --no-autoloader_layout-check \
+            --no-nested_classes_or_defines-check \
+            --with-filename $file
+ 
+        if [[ $? -ne 0 ]]
+        then
+            lint_is_bad=1
+        else
+            echo -e "${green}- OK: $file lint parse finished"
+        fi
+    fi
+done
+ 
+echo -e "${nocolor}[*] Checking manifests"
+echo
+for file in `git diff --name-only --cached | grep -E '\.(pp)'`
+do
+    if [[ -f $file ]]
+    then
+        puppet parser validate $file
+        if [[ $? -ne 0 ]]
+        then
+            echo -e "${red}- ERROR: puppet parser failed at: $file"
+            syntax_is_bad=1
+        else
+            echo -e "${green}- OK: $file looks valid"
+        fi
+    fi
+done
+ 
+echo -e "${nocolor}[*] Checking ERB syntax"
+echo
+for file in `git diff --name-only --cached | grep -E '\.(erb)'`
+do
+    if [[ -f $file ]]
+    then
+        erb -P -x -T '-' $file | ruby -c
+        if [[ $? -ne 0 ]]
+        then
+            echo -e "${red}- ERROR: erb parse: $file"
+            syntax_is_bad=1
+        else
+            echo -e "${green}- OK: $file looks valid"
+        fi
+    fi
+done
+
+echo -e "${nocolor}[*] Checking YAML syntax"
+echo
+for file in `git diff --name-only --cached | grep -E '\.(yaml)'`
+do
+    if [[ -f $file ]]
+    then
+        ruby -ryaml -e "YAML.parse(File.open('${file}'))" >/dev/null 2>&1
+        if [[ $? -ne 0 ]]
+        then
+            echo -e "${red}- ERROR: YAML parse: $file"
+            syntax_is_bad=1
+        else
+            echo -e "${green}- OK: $file looks valid"
+        fi
+    fi
+done
+
+if [[ $lint_is_bad -eq 1 ]]
+then
+    echo -e "${yellow}- Warning: make lint pass if you have time please..."
+#   dont exit. just inform user
+#   exit 1
+else
+    echo -e "${green}- All beautiful!"
+fi
+
+if [[ $syntax_is_bad -eq 1 ]]
+then
+    echo -e "${red}- FATAL: Not safe to commit."
+    exit 1
+else
+    echo -e "${green}- Safe to commit."
+fi
+
