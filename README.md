@@ -16,8 +16,8 @@ you can modify it to your environment.
 * ruby-erb-validate.sh
 
 Using ruby you can validate YAML files and ERB files.I use the same commands in the pre-commit script
-with the only difference the input are the commited files but using those shell scripts you can specify
-the input.
+with the only difference the input are the commited files.Using those shell scripts you can specify
+the input file your self.
 
 eg
  
