@@ -20,6 +20,8 @@ with the only difference the input are the commited files.Using those shell scri
 the input file your self.
 
 eg
+
+test ENV CFTOKEN=CFW-7LyFMNN-7kx2Wbch-UXTqhnUYc2k12P6S7W5v5gDC20
  
 ```
 $ ./ruby-yaml-validate.sh puppet/hiera/common.yaml
